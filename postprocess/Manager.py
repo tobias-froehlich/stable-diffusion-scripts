@@ -1,10 +1,10 @@
 import numpy as np
 import os
 from PIL import Image
-import const
 
 class Manager:
-    def __init__(self, height, width):
+    def __init__(self, directory, height, width):
+        self.__directory = directory
         self.__width = width
         self.__height = height
         self.__readPromptmasks()
@@ -13,9 +13,9 @@ class Manager:
 
     def __readPromptmasks(self):
         promptmasks = []
-        for filename in os.listdir(const.PATH):
+        for filename in os.listdir(self.__directory):
             if filename.startswith("mask_") and filename.endswith(".png"):
-                im = np.array(Image.open(os.path.join(const.PATH, filename)))
+                im = np.array(Image.open(os.path.join(self.__directory, filename)))
                 im = im[:, :, 0:1]
                 words = filename.split(".")[0].split("_")
                 print(words)
@@ -43,7 +43,7 @@ class Manager:
         expectedImHeight = self.__height * 192
         expectedImWidth = self.__width * 192
 
-        im = np.array(Image.open(os.path.join(const.PATH, "full.png")))
+        im = np.array(Image.open(os.path.join(self.__directory, "full.png")))
         assert im.shape[0] == expectedImHeight and im.shape[1] ==  expectedImWidth, \
             "full.png has wrong size."
 
@@ -53,7 +53,7 @@ class Manager:
 
     def next(self):
         filenames = []
-        for filename in os.listdir(const.PATH):
+        for filename in os.listdir(self.__directory):
             if filename.startswith("full") and filename.endswith(".png"):
                 filenames.append(filename)
      
@@ -119,4 +119,5 @@ class Manager:
         tile = self.__activeTiles[self.__tileIndex]
         return "init_%02i_%02i_%02i.png"%tile
 
-    
+    def getDirectory(self):
+        return self.__directory 

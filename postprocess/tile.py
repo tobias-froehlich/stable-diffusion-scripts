@@ -2,11 +2,9 @@ import numpy as np
 import os
 from PIL import Image
 import sys
-import const
 
-path = const.PATH
 
-def getImage(prefix):
+def getImage(path, prefix):
     for filename in os.listdir(path):
         if filename.startswith(prefix) and filename.endswith(".png"):
             return filename
@@ -35,24 +33,16 @@ def prepareInit(manager):
     promptmask = manager.getPromptmask()["mask"]
     fullFilename = manager.getLastFullFilename()
     (xmin, xholemin, xholemax, xmax, ymin, yholemin, yholemax, ymax) = manager.getCoordinates()
-    im = np.array(Image.open(os.path.join(path, fullFilename)))
-    print(im.shape)
+    im = np.array(Image.open(os.path.join(manager.getDirectory(), fullFilename)))
     alpha = np.expand_dims(np.zeros((im.shape[0], im.shape[1]), dtype=im.dtype), 2) + 255 
-    print(alpha.shape)
-    print(promptmask)
     alpha[yholemin:yholemax,xholemin:xholemax] = 255 - promptmask[yholemin:yholemax,xholemin:xholemax]
-    print(alpha.shape)
     im = im[ymin:ymax,xmin:xmax]
-    print(im.shape)
     alpha = alpha[ymin:ymax,xmin:xmax]
-    print(alpha.shape)
     if (im.shape[2] == 4):
         im = im[:, :, 0:3]
-    print(im.shape)
     im = np.concatenate([im, alpha], 2)
-    print(im.shape)
     initFilename = manager.getInitFilename()
-    Image.fromarray(im).save(os.path.join(path, initFilename))
+    Image.fromarray(im).save(os.path.join(manager.getDirectory(), initFilename))
 
 fullmask = np.zeros((192*3, 192*3, 1))
 for y in range(192*3):
@@ -87,8 +77,8 @@ def replaceOutput(manager, prefix):
     i = manager.getI()
     j = manager.getJ()
     lastFullFileName = manager.getLastFullFilename()
-    full = np.array(Image.open(os.path.join(path, lastFullFileName)))
-    output = np.array(Image.open(os.path.join(path, getImage(prefix))))
+    full = np.array(Image.open(os.path.join(manager.getDirectory(), lastFullFileName)))
+    output = np.array(Image.open(os.path.join(manager.getDirectory(), getImage(manager.getDirectory(), prefix))))
     if full.shape[2] == 4:
         full = full[:, :, 0:3]
     if output.shape[2] == 4:
@@ -100,6 +90,6 @@ def replaceOutput(manager, prefix):
     blended = np.array(blended, dtype=full.dtype)
     full[ymin:ymax,xmin:xmax] = blended
     currentFullFilename = manager.getCurrentFullFilename()
-    Image.fromarray(full).save(os.path.join(path, currentFullFilename))
+    Image.fromarray(full).save(os.path.join(manager.getDirectory(), currentFullFilename))
     
 
